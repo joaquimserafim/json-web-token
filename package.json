@@ -1,0 +1,35 @@
+{
+  "name": "json-web-token",
+  "version": "0.0.0",
+  "description": "JSON Web Token (JWT) is a compact token format intended for space constrained environments such as HTTP Authorization headers and URI query parameters.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/joaquimserafim/json-web-token.git"
+  },
+  "keywords": [
+    "jwt",
+    "json-web-token",
+    "web",
+    "http",
+    "tokens"
+  ],
+  "author": "@joaquimserafim",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joaquimserafim/json-web-token/issues"
+  },
+  "homepage": "https://github.com/joaquimserafim/json-web-token",
+  "dependencies": {
+    "base64-url": "^1.0.0"
+  },
+  "devDependencies": {
+    "tape": "^2.12.3"
+  }
+}
