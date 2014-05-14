@@ -1,53 +1,121 @@
 var crypto = require('crypto');
-var base64url = require('base64-url');
+var b64url = require('base64-url');
 
-
+// Utilities class
 var utils = {};
 
-utils.sign = function sign (type, input, key, method) {
-  if ('hmac' === type)
-    return base64url.escape(crypto.createHmac(method, key).update(input).digest('base64'));
+utils.sign = function (alg, key, input, cb) {
+  var op;
 
-  if ('sign' === type)
-    return base64url.escape(crypto.createSign(method).update(input).sign(key, 'base64'));
+  if('hmac' === alg.type) {
+    op = b64url.escape(crypto.createHmac(alg.hash, key).update(input).digest('base64'));
+    return cb(null, op);
+  }
+
+  if('sign' === alg.type) {
+    op = b64url.escape(crypto.createSign(alg.hash).update(input).sign(key, 'base64'));
+    return cb(null, op);
+  }
+
+  cb(new Error('The algorithm type isn\'t recognized!'));
 };
 
-utils.verify = function verify (type, input, key, method, signature) {
-  if ('hmac' === type)
-    return {res: signature === this.sign(type, input, key, method)};
+utils.verify = function (alg, key, input, sign, cb) {
+  if ('hmac' === alg.type) {
+    return this.sign(alg, key, input, function (err, res) {
+      if (err) return cb(err);
+      cb(null, sign === res);
+    });
+  }
 
-  if ('sign' === type)
-    return {
-      res: crypto.createVerify(method)
+  if ('sign' === alg.type) {
+    var op = crypto.createVerify(alg.hash)
             .update(input)
-            .verify(key, base64url.unescape(signature), 'base64')
-   };
+            .verify(key, b64url.unescape(sign), 'base64');
+    return cb(null, op);
+  }
 
-  return {error: 'The algorithm type isn\'t recognized!'};
+  cb(new Error('The algorithm type isn\'t recognized!'));
 };
 
 
+// JSON Web Token
 var jwt = exports;
 
 jwt._algorithms = {
-  'sha256': 'hmac',
-  'sha384': 'hmac',
-  'sha512': 'hmac',
-  'RSA-SHA256': 'sign'
+  HS256: {hash: 'sha256', type: 'hmac'},
+  HS384: {hash: 'sha384', type: 'hmac'},
+  HS512: {hash: 'sha512', type: 'hmac'},
+  RS256: {hash: 'RSA-SHA256', type: 'sign'}
 };
 
-jwt._search = function _search (alg) {
-  return this._algorithms[alg] && {alg: alg, type: this._algorithms[alg]};
+jwt._search = function (alg) {
+  return this._algorithms[alg];
 };
 
-jwt.getAlgorithms = function getAlgorithms() {
+jwt.getAlgorithms = function () {
   return Object.keys(this._algorithms);
 };
 
-jwt.encode = function encode (payload, key, algorithm, cb) {
-  if (!key) return cb(new Error('Must provide a key/secret!'));
+jwt.encode = function (key, payload, algorithm, cb) {
+  // some verifications
+  if (!key || !payload) return cb(new Error('The key and payload are mandatory!'));
 
-  algorithm = this._search(algorithm) || this._search('sha256');
+  if (typeof algorithm === 'function') {
+    cb = algorithm;
+    algorithm = 'HS256';
+  }
 
+  if (typeof cb !== 'function') cb = function () {};
+
+  // JWT header
+  var header = JSON.stringify({typ: 'JWT', alg: algorithm});
+
+  // get algorithm hash and type and check if is valid
+  algorithm = this._search(algorithm);
+  if (!algorithm) return cb(new Error('The algorithm is not supported!'));
+
+  var parts = b64url.encode(header) + '.' + b64url.encode(JSON.stringify(payload));
+
+  utils.sign(algorithm, key, parts, function (err, res) {
+    if (err) return cb(err);
+    cb (null, parts + '.' + res);
+  });
 };
 
+jwt.decode = function (key, token, validateJWT, cb) {
+  // some verifications
+  if (!key || !token) return cb(new Error('The key and token are mandatory!'));
+
+  if (typeof validateJWT === 'function') {
+    cb = validateJWT;
+    validateJWT = true;
+  }
+
+  if (typeof cb !== 'function') cb = function () {};
+
+  var parts = token.split('.');
+  // check all parts are present
+  if (parts.length !== 3) return cb(new Error('The JWT consist of three parts!'));
+
+  // base64 decode and parse JSON
+  var header = JSON.parse(b64url.decode(parts[0]));
+  var payload = JSON.parse(b64url.decode(parts[1]));
+
+  if (!validateJWT) return cb(null, payload);
+
+  // Validating the JWT
+  // get algorithm hash and type and check if is valid
+  var algorithm = this._search(header.alg);
+  if (!algorithm) return cb(new Error('The algorithm is not supported!'));
+
+  // verify the signature
+  utils.verify(algorithm,
+                key,
+                parts.slice(0, 2).join('.'),
+                parts[2],
+                function (err, res) {
+                  if (err) cb(err);
+                   cb(null, res);
+                });
+};
