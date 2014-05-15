@@ -83,14 +83,9 @@ jwt.encode = function (key, payload, algorithm, cb) {
   });
 };
 
-jwt.decode = function (key, token, validateJWT, cb) {
+jwt.decode = function (key, token, cb) {
   // some verifications
   if (!key || !token) return cb(new Error('The key and token are mandatory!'));
-
-  if (typeof validateJWT === 'function') {
-    cb = validateJWT;
-    validateJWT = true;
-  }
 
   if (typeof cb !== 'function') cb = function () {};
 
@@ -102,9 +97,6 @@ jwt.decode = function (key, token, validateJWT, cb) {
   var header = JSON.parse(b64url.decode(parts[0]));
   var payload = JSON.parse(b64url.decode(parts[1]));
 
-  if (!validateJWT) return cb(null, payload);
-
-  // Validating the JWT
   // get algorithm hash and type and check if is valid
   var algorithm = this._search(header.alg);
   if (!algorithm) return cb(new Error('The algorithm is not supported!'));
@@ -115,7 +107,9 @@ jwt.decode = function (key, token, validateJWT, cb) {
                 parts.slice(0, 2).join('.'),
                 parts[2],
                 function (err, res) {
-                  if (err) cb(err);
-                   cb(null, res);
+                  if (err) return cb(err);
+                  if (res) return cb(null, payload);
+                  // jwt not valid
+                  cb(new Error('The JSON Web Signature is not valid!'));
                 });
 };
