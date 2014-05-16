@@ -108,7 +108,8 @@ jwt.decode = function (key, token, cb) {
                 parts[2],
                 function (err, res) {
                   // error or the signature isn't valid
-                  if (err || !res) return cb(err || new Error('The JSON Web Signature isn\'t valid!'));
+                  if (err || !res)
+                    return cb(err || new Error('The JSON Web Signature isn\'t valid!'));
                   // ok, pass the playload
                   cb(null, payload);
                 });
