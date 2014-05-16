@@ -17,7 +17,7 @@ utils.sign = function (alg, key, input, cb) {
     return cb(null, op);
   }
 
-  cb(new Error('The algorithm type isn\'t recognized!'));
+ return cb(new Error('The algorithm type isn\'t recognized!'));
 };
 
 utils.verify = function (alg, key, input, sign, cb) {
@@ -35,7 +35,7 @@ utils.verify = function (alg, key, input, sign, cb) {
     return cb(null, op);
   }
 
-  cb(new Error('The algorithm type isn\'t recognized!'));
+  return cb(new Error('The algorithm type isn\'t recognized!'));
 };
 
 
@@ -107,9 +107,9 @@ jwt.decode = function (key, token, cb) {
                 parts.slice(0, 2).join('.'),
                 parts[2],
                 function (err, res) {
-                  if (err) return cb(err);
-                  if (res) return cb(null, payload);
-                  // jwt not valid
-                  cb(new Error('The JSON Web Signature is not valid!'));
+                  // error or the signature isn't valid
+                  if (err || !res) return cb(err || new Error('The JSON Web Signature isn\'t valid!'));
+                  // ok, pass the playload
+                  cb(null, payload);
                 });
 };
