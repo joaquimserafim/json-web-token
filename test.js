@@ -1,6 +1,5 @@
 var test = require('tape');
-var jwt = require('../');
-
+var jwt = require('./.');
 
 test('timing test', function (t) {
   t.plan(5);
