@@ -38,7 +38,7 @@ test('jwt - encode with callback / hmac', function(assert) {
 });
 
 test('jwt - encode with callback / sign', function(assert) {
-  var pem = read(__dirname + '/fixtures/test.pem', {encoding: 'ascii'});
+  var pem = read(__dirname + '/fixtures/test.pem').toString('ascii');
   jwt.encode(pem, payload, 'RS256', function(err, token) {
     assert.deepEqual(err, undefined);
     assert.ok(token);
@@ -64,7 +64,7 @@ test('jwt - decode with callback / hmac', function(assert) {
 });
 
 test('jwt - decode with callback / sign', function(assert) {
-  var crt = read(__dirname + '/fixtures/test.crt', {encoding: 'ascii'});
+  var crt = read(__dirname + '/fixtures/test.crt').toString('ascii');
   jwt.decode(crt, theTokenSign, function(err, decodePayload) {
     assert.deepEqual(err, undefined);
     assert.deepEqual(decodePayload, payload);
