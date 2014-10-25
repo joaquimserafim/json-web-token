@@ -1,58 +1,50 @@
 'use strict';
 
-var crypto = require('crypto');
-var b64url = require('base64-url');
+var crypto  = require('crypto');
+var b64url  = require('base64-url');
 
 //
 // Utilities class
 //
 var utils = {};
 
-utils.sign = function sign(alg, key, input, cb) {
-  var op;
-
+utils.sign = function sign(alg, key, input) {
   if ('hmac' === alg.type) {
-    op = b64url.escape(
+    return b64url.escape(
       crypto.createHmac(alg.hash, key)
         .update(input)
         .digest('base64')
     );
-
-    cb(null, op);
-  } else if ('sign' === alg.type) {
-    op = b64url.escape(
+  } else {// ('sign' === alg.type)
+    return b64url.escape(
       crypto.createSign(alg.hash)
         .update(input)
         .sign(key, 'base64')
     );
-
-    cb(null, op);
-  } else {
-    cb(new Error('The algorithm type isn\'t recognized!'));
   }
 };
 
-utils.verify = function verify(alg, key, input, sign, cb) {
+utils.verify = function verify(alg, key, input, sign) {
   if ('hmac' === alg.type) {
-    this.sign(alg, key, input, function(err, res) {
-      if (err) {
-        cb(err);
-      } else {
-        cb(null, sign === res);
-      }
-    });
-  } else if ('sign' === alg.type) {
-    var op = crypto.createVerify(alg.hash)
+    return sign === this.sign(alg, key, input);
+  } else {// ('sign' === alg.type)
+    return crypto.createVerify(alg.hash)
       .update(input)
       .verify(key, b64url.unescape(sign), 'base64');
-
-    cb(null, op);
-  } else {
-    cb(new Error('The algorithm type isn\'t recognized!'));
   }
 };
 
-utils.noop = function noop() {};
+utils.fnError = function(err, cb) {
+  return cb ?
+    cb(err) :
+    {error: err};
+};
+
+utils.fnResult = function(res, cb) {
+  return cb ?
+    cb(undefined, res) :
+    {value: res};
+};
 
 //
 // JSON Web Token
@@ -75,19 +67,22 @@ jwt.getAlgorithms = function getAlgorithms() {
 };
 
 jwt.encode = function encode(key, payload, algorithm, cb) {
+  //
   // some verifications
+  //
+  if (!algorithm || typeof algorithm === 'function') {
+    cb = algorithm;
+    algorithm = 'HS256';
+  }
+
+  // verify key & payload
   if (!key || !payload) {
-    cb(new Error('The key and payload are mandatory!'));
+    return utils.fnError(new Error('The key and payload are mandatory!'),
+      cb);
+  } else if (!Object.keys(payload).length) {
+    return utils.fnError(new Error('The payload is empty object!'),
+      cb);
   } else {
-    if (typeof algorithm === 'function') {
-      cb = algorithm;
-      algorithm = 'HS256';
-    }
-
-    if (typeof cb !== 'function') {
-      cb = utils.noop;
-    }
-
     // JWT header
     var header = JSON.stringify({typ: 'JWT', alg: algorithm});
 
@@ -95,36 +90,30 @@ jwt.encode = function encode(key, payload, algorithm, cb) {
     algorithm = this._search(algorithm);
 
     if (!algorithm) {
-      cb(new Error('The algorithm is not supported!'));
+      return utils.fnError(new Error('The algorithm is not supported!'),
+        cb);
     } else {
       var parts = b64url.encode(header) +
         '.' + b64url.encode(JSON.stringify(payload));
 
-      utils.sign(algorithm, key, parts, function(err, res) {
-        if (err) {
-          cb(err);
-        } else {
-          cb(null, parts + '.' + res);
-        }
-      });
+      var res = utils.sign(algorithm, key, parts);
+      return utils.fnResult(parts + '.' + res, cb);
     }
   }
 };
 
 jwt.decode = function decode(key, token, cb) {
-  // some verifications
   if (!key || !token) {
-    cb(new Error('The key and token are mandatory!'));
+    return utils.fnError(new Error('The key and token are mandatory!'),
+      cb);
   } else {
-    if (typeof cb !== 'function') {
-      cb = utils.noop;
-    }
-
     var parts = token.split('.');
 
-    // check all parts are present
+    // check all parts're present
     if (parts.length !== 3) {
-      return cb(new Error('The JWT should consist of three parts!'));
+      return utils
+        .fnError(new Error('The JWT should consist of three parts!'),
+          cb);
     }
 
     // base64 decode and parse JSON
@@ -135,24 +124,20 @@ jwt.decode = function decode(key, token, cb) {
     var algorithm = this._search(header.alg);
 
     if (!algorithm) {
-      cb(new Error('The algorithm is not supported!'));
+      return utils.fnError(new Error('The algorithm is not supported!'),
+        cb);
     } else {
       // verify the signature
-      utils.verify(
-        algorithm,
+      var res = utils.verify(algorithm,
         key,
         parts.slice(0, 2).join('.'),
-        parts[2],
-        function(err, res) {
-          // error or the signature isn't valid
-          if (err || !res) {
-            cb(err || new Error('The JSON Web Signature isn\'t valid!'));
-          } else {
-            // ok, pass the playload
-            cb(null, payload);
-          }
-        }
-      );
+        parts[2]);
+
+      if (res) {
+        return utils.fnResult(payload, cb);
+      } else {
+        return utils.fnError(new Error('Invalid key!'), cb);
+      }
     }
   }
 };

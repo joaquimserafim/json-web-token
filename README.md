@@ -1,7 +1,9 @@
 # json-web-token
 
-JWT encode and decode for Node.js with callbacks
+JWT encode and decode for Node.js that can use callbacks or by returning an object `{error:, value:}`
 
+
+**100% of code coverage** (npm test & npm run coverage)
 
 **WIKI**
 
