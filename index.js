@@ -10,17 +10,13 @@ var utils = {};
 
 utils.sign = function sign(alg, key, input) {
   if ('hmac' === alg.type) {
-    return b64url.escape(
-      crypto.createHmac(alg.hash, key)
-        .update(input)
-        .digest('base64')
-    );
+    return b64url.escape(crypto.createHmac(alg.hash, key)
+      .update(input)
+      .digest('base64'));
   } else {// ('sign' === alg.type)
-    return b64url.escape(
-      crypto.createSign(alg.hash)
-        .update(input)
-        .sign(key, 'base64')
-    );
+    return b64url.escape(crypto.createSign(alg.hash)
+      .update(input)
+      .sign(key, 'base64'));
   }
 };
 
@@ -111,8 +107,7 @@ jwt.decode = function decode(key, token, cb) {
 
     // check all parts're present
     if (parts.length !== 3) {
-      return utils
-        .fnError(new Error('The JWT should consist of three parts!'),
+      return utils.fnError(new Error('The JWT should consist of three parts!'),
           cb);
     }
 
