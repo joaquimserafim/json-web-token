@@ -77,20 +77,23 @@ test('jwt - decode with callback / bad algorithm', function(assert) {
   var badHeader = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJ3b3cifQ';
   t = badHeader + '.' + t.join('.');
   jwt.decode(secret, t, function(err) {
-    assert.deepEqual(err.message, 'The algorithm is not supported!');
+    assert.equal(err.name, 'JWTError');
+    assert.equal(err.message, 'The algorithm is not supported!');
     assert.end();
   });
 });
 
 test('jwt - decode with callback / invalid key', function(assert) {
   jwt.decode('wow', theToken, function(err) {
-    assert.deepEqual(err.message, 'Invalid key!');
+    assert.equal(err.name, 'JWTError');
+    assert.equal(err.message, 'Invalid key!');
     assert.end();
   });
 });
 
 test('jwt - encode with callback / null payload', function(assert) {
   jwt.encode(secret, null, function(err) {
+    assert.equal(err.name, 'JWTError');
     assert.equal(err.message, 'The key and payload are mandatory!');
     assert.end();
   });
@@ -98,6 +101,7 @@ test('jwt - encode with callback / null payload', function(assert) {
 
 test('jwt - encode with callback / empty payload', function(assert) {
   jwt.encode(secret, {}, function(err) {
+    assert.equal(err.name, 'JWTError');
     assert.equal(err.message, 'The payload is empty object!');
     assert.end();
   });
@@ -105,6 +109,7 @@ test('jwt - encode with callback / empty payload', function(assert) {
 
 test('jwt - encode with callback / null secret', function(assert) {
   jwt.encode(null, payload, function(err) {
+    assert.equal(err.name, 'JWTError');
     assert.equal(err.message, 'The key and payload are mandatory!');
     assert.end();
   });
@@ -112,14 +117,16 @@ test('jwt - encode with callback / null secret', function(assert) {
 
 test('jwt - decode with callback / null key', function(assert) {
   jwt.decode(null, theToken, function(err) {
-    assert.deepEqual(err.message, 'The key and token are mandatory!');
+    assert.equal(err.name, 'JWTError');
+    assert.equal(err.message, 'The key and token are mandatory!');
     assert.end();
   });
 });
 
 test('jwt - decode with callback / bad token', function(assert) {
   jwt.decode(secret, theToken.split('.').slice(0, 2).join('.'), function(err) {
-    assert.deepEqual(err.message, 'The JWT should consist of three parts!');
+    assert.equal(err.name, 'JWTError');
+    assert.equal(err.message, 'The JWT should consist of three parts!');
     assert.end();
   });
 });
@@ -148,6 +155,7 @@ test('jwt - decode with without / hmac', function(assert) {
 test('jwt - encode with callback / null payload', function(assert) {
   var res = jwt.encode(secret, null);
   assert.deepEqual(typeof res, 'object');
+  assert.equal(res.error.name, 'JWTError');
   assert.equal(res.error.message, 'The key and payload are mandatory!');
   assert.end();
 });
@@ -155,6 +163,7 @@ test('jwt - encode with callback / null payload', function(assert) {
 test('jwt - encode with callback / empty payload', function(assert) {
   var res = jwt.encode(secret, {});
   assert.deepEqual(typeof res, 'object');
+  assert.equal(res.error.name, 'JWTError');
   assert.equal(res.error.message, 'The payload is empty object!');
   assert.end();
 });
@@ -162,6 +171,7 @@ test('jwt - encode with callback / empty payload', function(assert) {
 test('jwt - encode with callback / null secret', function(assert) {
   var res = jwt.encode(null, payload);
   assert.deepEqual(typeof res, 'object');
+  assert.equal(res.error.name, 'JWTError');
   assert.equal(res.error.message, 'The key and payload are mandatory!');
   assert.end();
 });

@@ -3,7 +3,14 @@
 JWT encode and decode for Node.js that can use callbacks or by returning an object `{error:, value:}`
 
 
-**100% of code coverage** (npm test & npm run coverage)
+**code coverage:**  
+`npm test && npm run check-coverage && npm run coverage`
+
+**codestyle:** 	
+`npm run codestyle`
+
+**jshint:** 	
+`npm run jshint`
 
 **WIKI**
 
@@ -18,7 +25,7 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 
 
 
-**V1**
+**V1.2**
 
 
 
@@ -46,15 +53,15 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 		}
 
 	*attention that exists some reserved claim names (like "iss", "iat", etc..) check [in here](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-08#section-4) for more info about JWT Claims.*	
-* **algorithm**, default to 'sha256', use jwt#getAlgorithms()to get the supported algorithms
-* **cb**, the callback(err, token)
+* **algorithm**, default to 'sha256', use *jwt#getAlgorithms()* to get the supported algorithms
+* **cb**, the callback(err[type, message], token)
 
 
 #####  jwt#decode(key, token, cb)
 
 * **key**, your secret
 * **token**, the JWT token
-* **cb**, the callback(err, payload_decoded)
+* **cb**, the callback(err[type, message], payload_decoded)
 
 
 #### Example
@@ -77,13 +84,19 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 	
 	// encode
 	jwt.encode(secret, payload, function (err, token) {
-	  if (err) return console.error(err);
-	  console.log(token);
+	  if (err) {
+	  	return console.error(err.type, err.message);
+	  } else {
+	  	console.log(token);
 
-	  // decode
-	  jwt.decode(secret, token, function (err_, decode) {
-	    if (err_) return console.error(err_);
-	    console.log(decode);
-	  });
+		// decode
+	  	jwt.decode(secret, token, function (err_, decode) {
+	    	if (err) {
+	  			return console.error(err.type, err.message);
+	  		} else {
+	    		console.log(decode);
+	    	}
+	  	});
+	  }
 	});
 
