@@ -54,14 +54,14 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 
 	*attention that exists some reserved claim names (like "iss", "iat", etc..) check [in here](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-08#section-4) for more info about JWT Claims.*	
 * **algorithm**, default to 'sha256', use *jwt#getAlgorithms()* to get the supported algorithms
-* **cb**, the callback(err[type, message], token)
+* **cb**, the callback(err[name, message], token)
 
 
 #####  jwt#decode(key, token, cb)
 
 * **key**, your secret
 * **token**, the JWT token
-* **cb**, the callback(err[type, message], payload_decoded)
+* **cb**, the callback(err[name, message], payloadDecoded)
 
 
 #### Example
@@ -85,14 +85,14 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 	// encode
 	jwt.encode(secret, payload, function (err, token) {
 	  if (err) {
-	  	return console.error(err.type, err.message);
+	  	return console.error(err.name, err.message);
 	  } else {
 	  	console.log(token);
 
 		// decode
 	  	jwt.decode(secret, token, function (err_, decode) {
 	    	if (err) {
-	  			return console.error(err.type, err.message);
+	  			return console.error(err.name, err.message);
 	  		} else {
 	    		console.log(decode);
 	    	}
