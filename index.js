@@ -60,6 +60,8 @@ utils.fnResult = function(res, cb) {
 //
 var jwt = module.exports;
 
+jwt.JWTError = JWTError;
+
 jwt._algorithms = {
   HS256: {hash: 'sha256', type: 'hmac'},
   HS384: {hash: 'sha384', type: 'hmac'},

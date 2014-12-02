@@ -20,6 +20,13 @@ var theToken = null;
 var theTokenSign = null;
 var algorithms;
 
+test('get the error class', function(assert) {
+  var JWTError = jwt.JWTError;
+  assert.equal(typeof JWTError, 'function');
+  assert.ok((new JWTError()) instanceof Error);
+  assert.end();
+});
+
 test('get the jwt supported algorithms', function(assert) {
   algorithms = jwt.getAlgorithms();
   assert.deepEqual(typeof algorithms, 'object');
