@@ -139,9 +139,8 @@ test('jwt - decode with callback / bad token', function(assert) {
 });
 
 //
-// without callback but returning
+// without callback but returning the result
 //
-
 test('jwt - encode without callback / hmac', function(assert) {
   var res = jwt.encode(secret, payload);
   assert.deepEqual(typeof res, 'object');
@@ -151,7 +150,7 @@ test('jwt - encode without callback / hmac', function(assert) {
   assert.end();
 });
 
-test('jwt - decode with without / hmac', function(assert) {
+test('jwt - decode without callback / hmac', function(assert) {
   var res = jwt.decode(secret, theToken);
   assert.deepEqual(typeof res, 'object');
   assert.deepEqual(res.error, undefined);
@@ -159,7 +158,7 @@ test('jwt - decode with without / hmac', function(assert) {
   assert.end();
 });
 
-test('jwt - encode with callback / null payload', function(assert) {
+test('jwt - encode without callback / null payload', function(assert) {
   var res = jwt.encode(secret, null);
   assert.deepEqual(typeof res, 'object');
   assert.equal(res.error.name, 'JWTError');
@@ -167,7 +166,7 @@ test('jwt - encode with callback / null payload', function(assert) {
   assert.end();
 });
 
-test('jwt - encode with callback / empty payload', function(assert) {
+test('jwt - encode without callback / empty payload', function(assert) {
   var res = jwt.encode(secret, {});
   assert.deepEqual(typeof res, 'object');
   assert.equal(res.error.name, 'JWTError');
@@ -175,7 +174,7 @@ test('jwt - encode with callback / empty payload', function(assert) {
   assert.end();
 });
 
-test('jwt - encode with callback / null secret', function(assert) {
+test('jwt - encode without callback / null secret', function(assert) {
   var res = jwt.encode(null, payload);
   assert.deepEqual(typeof res, 'object');
   assert.equal(res.error.name, 'JWTError');
