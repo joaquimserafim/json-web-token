@@ -3,15 +3,6 @@
 JWT encode and decode for Node.js that can use callbacks or by returning an object `{error:, value:}`
 
 
-**code coverage:**  
-`npm test && npm run check-coverage && npm run coverage`
-
-**codestyle:** 	
-`npm run codestyle`
-
-**jshint:** 	
-`npm run jshint`
-
 **WIKI**
 
 JSON Web Token (JWT) is a compact URL-safe means of representing claims to be transferred between two parties. The claims in a JWT are encoded as a JavaScript Object Notation (JSON) object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or MACed and/or encrypted. 
@@ -21,13 +12,7 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 
 <a href="https://nodei.co/npm/json-web-token/"><img src="https://nodei.co/npm/json-web-token.png?downloads=true"></a>
 
-[![Build Status](https://travis-ci.org/joaquimserafim/json-web-token.png?branch=master)](https://travis-ci.org/joaquimserafim/json-web-token)
-
-
-
-**V1.2**
-
-
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://travis-ci.org/joaquimserafim/json-web-token)![Code Coverage 100%](https://img.shields.io/badge/code%20coverage-100%25-green.svg?style=flat-square)[![ISC License](https://img.shields.io/badge/license-ISC-blue.svg?style=flat-square)](https://github.com/joaquimserafim/json-web-token/blob/master/LICENSE)
 
 
 ###API
@@ -100,3 +85,32 @@ JSON Web Token (JWT) is a compact URL-safe means of representing claims to be tr
 	  }
 	});
 
+
+---
+
+#####this projet has been set up with a precommit that forces you to follow a code style, no jshint issues and 100% of code coverage before commit
+
+to run test
+``` js
+npm test
+```
+
+to run jshint
+``` js
+npm run jshint
+```
+
+to run code style
+``` js
+npm run code-style
+```
+
+to run check code coverage
+``` js
+npm run check-coverage
+```
+
+to open the code coverage report
+``` js
+npm run open-coverage
+```
