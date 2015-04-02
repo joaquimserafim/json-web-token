@@ -88,8 +88,8 @@ jwt.encode = function encode(key, payload, algorithm, cb) {
 
   // verify key & payload
   if (!key || !payload) {
-    return utils.fnError(new JWTError('The key and payload are mandatory!'),
-      cb);
+    return utils
+    .fnError(new JWTError('The key and payload are mandatory!'), cb);
   } else if (!Object.keys(payload).length) {
     return utils.fnError(new JWTError('The payload is empty object!'), cb);
   } else {

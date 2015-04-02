@@ -1,20 +1,22 @@
 'use strict';
 
-var read  = require('fs').readFileSync;
-var test  = require('tape');
-var jwt   = require('../.');
+var read    = require('fs').readFileSync;
+var test    = require('tape');
+var b64url  = require('base64-url');
+var jwt     = require('../.');
 
 var payload = {
-  'iss': 'my_issurer',
-  'aud': 'World',
-  'iat': 1400062400223,
-  'typ': '/online/transactionstatus/v2',
-  'request': {
-    'myTransactionId': '[myTransactionId]',
-    'merchantTransactionId': '[merchantTransactionId]',
-    'status': 'SUCCESS'
+  iss: 'my_issurer',
+  aud: 'World',
+  iat: 1400062400223,
+  typ: '/online/transactionstatus/v2',
+  request: {
+    myTransactionId: '[myTransactionId]',
+    merchantTransactionId: '[merchantTransactionId]',
+    status: 'SUCCESS'
   }
 };
+
 var secret = 'TOPSECRETTTTT';
 var theToken = null;
 var theTokenSign = null;
@@ -179,5 +181,29 @@ test('jwt - encode without callback / null secret', function(assert) {
   assert.deepEqual(typeof res, 'object');
   assert.equal(res.error.name, 'JWTError');
   assert.equal(res.error.message, 'The key and payload are mandatory!');
+  assert.end();
+});
+
+//
+//
+//
+
+test('should not encode for the "none" algorithm', function(assert) {
+  jwt.encode(secret, payload, 'none', function(err) {
+    assert.equal(err.name, 'JWTError');
+    assert.equal(err.message, 'The algorithm is not supported!');
+    assert.end();
+  });
+});
+
+test('should not decode for the "none" algorithm', function(assert) {
+  var encode    = jwt.encode(secret, payload).value;
+  var badToken  = encode.split('.');
+  var badAlg    = b64url.encode(JSON.stringify({typ: 'JWT', alg: 'none'}));
+  badToken[0]   = badAlg;
+  var result    = jwt.decode(secret, badToken.join('.'));
+  assert.deepEqual(!!result.error, true);
+  assert.equal(result.error.name, 'JWTError');
+  assert.equal(result.error.message, 'The algorithm is not supported!');
   assert.end();
 });
