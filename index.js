@@ -88,8 +88,9 @@ jwt.encode = function encode(key, payload, algorithm, cb) {
 
   // verify key & payload
   if (!key || !payload) {
-    return utils
-    .fnError(new JWTError('The key and payload are mandatory!'), cb);
+    return utils.fnError(
+      new JWTError('The key and payload are mandatory!'), cb
+    );
   } else if (!Object.keys(payload).length) {
     return utils.fnError(new JWTError('The payload is empty object!'), cb);
   } else {
@@ -99,15 +100,15 @@ jwt.encode = function encode(key, payload, algorithm, cb) {
     // get algorithm hash and type and check if is valid
     algorithm = this._search(algorithm);
 
-    if (!algorithm) {
-      return utils
-        .fnError(new JWTError('The algorithm is not supported!'), cb);
-    } else {
+    if (algorithm) {
       var parts = b64url.encode(header) +
         '.' + b64url.encode(JSON.stringify(payload));
-
       var res = utils.sign(algorithm, key, parts);
       return utils.fnResult(parts + '.' + res, cb);
+    } else {
+      return utils.fnError(
+        new JWTError('The algorithm is not supported!'), cb
+      );
     }
   }
 };
@@ -120,8 +121,9 @@ jwt.decode = function decode(key, token, cb) {
 
     // check all parts're present
     if (parts.length !== 3) {
-      return utils
-        .fnError(new JWTError('The JWT should consist of three parts!'), cb);
+      return utils.fnError(
+        new JWTError('The JWT should consist of three parts!'), cb
+      );
     }
 
     // base64 decode and parse JSON
@@ -132,14 +134,17 @@ jwt.decode = function decode(key, token, cb) {
     var algorithm = this._search(header.alg);
 
     if (!algorithm) {
-      return utils
-        .fnError(new JWTError('The algorithm is not supported!'), cb);
+      return utils.fnError(
+        new JWTError('The algorithm is not supported!'), cb
+      );
     } else {
       // verify the signature
-      var res = utils.verify(algorithm,
+      var res = utils.verify(
+        algorithm,
         key,
         parts.slice(0, 2).join('.'),
-        parts[2]);
+        parts[2]
+      );
 
       if (res) {
         return utils.fnResult(payload, cb);

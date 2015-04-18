@@ -185,7 +185,9 @@ test('jwt - encode without callback / null secret', function(assert) {
 });
 
 //
-//
+// test the jwt vulnerability because of the "none" algorithm
+// this alg is intended to be used for situations where the integrity
+// of the token has already been verified
 //
 
 test('should not encode for the "none" algorithm', function(assert) {
