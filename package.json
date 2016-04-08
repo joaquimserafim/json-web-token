@@ -1,14 +1,18 @@
 {
-  "name": "json-web-token",
-  "version": "1.6.3",
+  "name": "jeson-web-token",
+  "version": "2.0.0",
   "description": "JSON Web Token (JWT) is a compact token format intended for space constrained environments such as HTTP Authorization headers and URI query parameters.",
   "main": "index.js",
   "scripts": {
-    "test": "istanbul cover tape test/test.js",
-    "jshint": "jshint -c .jshintrc index.js test/*.js",
-    "code-style": "jscs -p google index.js test/*.js",
-    "check-coverage": "istanbul check-coverage --statements 100 --functions 100 --lines 100 --branches 100",
-    "open-coverage": "open coverage/lcov-report/index.html"
+    "test": "tape test/test.js | tap-spec",
+    "lint": "jshint -c .jshintrc index.js test/test.js",
+    "style": "jscs -p google index.js test/test.js",
+    "coverage": "istanbul cover tape test/test.js && istanbul check-coverage",
+    "coverage:open": "open reports/coverage/index.html",
+    "complexity": "plato -r -t 'jenkins-client code report' -l .jshintrc -x 'node_modules|reports|test' -d reports/plato .",
+    "complexity:open": "open reports/plato/index.html",
+    "security": "nsp check",
+    "bench": "echo 'installing dependencies first ...' && sleep 1 && npm i benchmark microtime && echo '' && node bench"
   },
   "files": [
     "LICENSE",
@@ -34,19 +38,24 @@
   },
   "homepage": "https://github.com/joaquimserafim/json-web-token",
   "dependencies": {
-    "base64-url": "^1.2.1"
+    "base64-url": "^1.2.2"
   },
   "devDependencies": {
-    "istanbul": "^0.3.13",
-    "jscs": "^1.12.0",
-    "jshint": "^2.7.0",
-    "pre-commit": "^1.0.6",
-    "tape": "^4.0.0"
+    "istanbul": "^0.4.3",
+    "jscs": "^2.11.0",
+    "jshint": "^2.9.1",
+    "plato": "^1.5.0",
+    "pre-commit": "^1.1.2",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.5.1"
   },
   "pre-commit": [
-    "jshint",
-    "code-style",
-    "test",
-    "check-coverage"
-  ]
+    "lint",
+    "style",
+    "coverage",
+    "security"
+  ],
+  "engine": {
+    "node": ">=4"
+  }
 }

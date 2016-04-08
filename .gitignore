@@ -1,4 +1,8 @@
-/coverage
-/node_modules
-*.html
+node_modules
 *.log
+*.sublime-project
+.npmignore
+.DS_Store
+coverage
+reports
+*.html
