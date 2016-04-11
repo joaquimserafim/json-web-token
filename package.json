@@ -1,6 +1,6 @@
 {
-  "name": "jeson-web-token",
-  "version": "2.0.0",
+  "name": "json-web-token",
+  "version": "2.0.1",
   "description": "JSON Web Token (JWT) is a compact token format intended for space constrained environments such as HTTP Authorization headers and URI query parameters.",
   "main": "index.js",
   "scripts": {
@@ -41,9 +41,11 @@
     "base64-url": "^1.2.2"
   },
   "devDependencies": {
+    "benchmark": "^2.1.0",
     "istanbul": "^0.4.3",
     "jscs": "^2.11.0",
     "jshint": "^2.9.1",
+    "microtime": "^2.0.0",
     "plato": "^1.5.0",
     "pre-commit": "^1.1.2",
     "tap-spec": "^4.1.1",
