@@ -1,0 +1,15 @@
+check:
+  global:
+    statements: 100
+    lines: 100
+    branches: 100
+    functions: 100
+
+reporting:
+  print: summary
+  reports:
+    - html
+  dir: ./reports/coverage
+  report-config:
+    html:
+      dir: ./reports/coverage
