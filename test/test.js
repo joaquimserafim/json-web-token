@@ -92,6 +92,16 @@ test('jwt - decode with callback / bad algorithm', function(assert) {
   })
 })
 
+test('jwt - decode with callback / bad token', function(assert) {
+  var badToken = theToken.split('.')
+  badToken[1] = 'bad token hash'
+  jwt.decode(secret, badToken.join('.'), function(err) {
+    assert.equal(err.name, 'JWTError')
+    assert.equal(err.message, 'Invalid key!')
+    assert.end()
+  })
+})
+
 test('jwt - decode with callback / invalid key', function(assert) {
   jwt.decode('wow', theToken, function(err) {
     assert.equal(err.name, 'JWTError')

@@ -3,6 +3,7 @@
 const crypto    = require('crypto')
 const b64url    = require('base64-url')
 const inherits  = require('util').inherits
+const parse     = require('json-parse-safe')
 
 //
 // supported algorithms
@@ -70,8 +71,8 @@ function decode (key, token, cb) {
   }
 
   // base64 decode and parse JSON
-  var header = JSON.parse(b64url.decode(parts[0]))
-  var payload = JSON.parse(b64url.decode(parts[1]))
+  var header = JSONParse(b64url.decode(parts[0]))
+  var payload = JSONParse(b64url.decode(parts[1]))
 
   // get algorithm hash and type and check if is valid
   var algorithm = algorithms[header.alg]
@@ -148,5 +149,11 @@ function paramIsValid (param, type) {
 
 function paramsAreFalsy (param1, param2) {
   return !param1 || !param2
+}
+
+function JSONParse (str) {
+  var res = parse(str)
+
+  return res.error && '' || res.value
 }
 

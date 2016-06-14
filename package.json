@@ -1,6 +1,6 @@
 {
   "name": "json-web-token",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "JSON Web Token (JWT) is a compact token format intended for space constrained environments such as HTTP Authorization headers and URI query parameters.",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "style": "jscs -p google index.js test/test.js",
     "coverage": "istanbul cover tape test/test.js && istanbul check-coverage",
     "coverage:open": "open reports/coverage/index.html",
-    "complexity": "plato -r -t 'jenkins-client code report' -l .jshintrc -x 'node_modules|reports|test' -d reports/plato .",
+    "complexity": "plato -r -t 'jenkins-client code report' -l .jshintrc -x 'node_modules|reports|test|bench' -d reports/plato .",
     "complexity:open": "open reports/plato/index.html",
     "security": "nsp check",
     "bench": "echo 'installing dependencies first ...' && sleep 1 && npm i --save-dev benchmark microtime && echo '' && node bench && npm uninstall --save-dev benchmark microtime"
@@ -38,15 +38,16 @@
   },
   "homepage": "https://github.com/joaquimserafim/json-web-token",
   "dependencies": {
-    "base64-url": "^1.2.2"
+    "base64-url": "^1.2.2",
+    "json-parse-safe": "^1.0.3"
   },
   "devDependencies": {
     "istanbul": "^0.4.3",
     "jscs": "^2.11.0",
-    "jshint": "^2.9.1",
-    "nsp": "^2.3.0",
+    "jshint": "^2.9.2",
+    "nsp": "^2.4.0",
     "plato": "^1.5.0",
-    "pre-commit": "^1.1.2",
+    "pre-commit": "^1.1.3",
     "tap-spec": "^4.1.1",
     "tape": "^4.5.1"
   },
