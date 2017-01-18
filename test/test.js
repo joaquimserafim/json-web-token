@@ -4,12 +4,16 @@ var read    = require('fs').readFileSync
 var test    = require('tape')
 var b64url  = require('base64-url')
 var jwt     = require('../.')
+var xtend   = require('xtend')
 
 var payload = {
   iss: 'my_issurer',
   aud: 'World',
   iat: 1400062400223,
   typ: '/online/transactionstatus/v2',
+  header: {
+    kid: 'TestKeyId'
+  },
   request: {
     myTransactionId: '[myTransactionId]',
     merchantTransactionId: '[merchantTransactionId]',
@@ -17,9 +21,16 @@ var payload = {
   }
 }
 
+var extraHeaders = {
+    header: {kid: 'TestKeyId'}
+  };
+
+var payloadWithHeaders = xtend(payload, extraHeaders);
+
 var secret = 'TOPSECRETTTTT'
 var theToken = null
 var theTokenSign = null
+var theTokenSignWithHeaders = null
 var algorithms
 
 test('get the error class', function(assert) {
@@ -57,6 +68,17 @@ test('jwt - encode with callback / sign', function(assert) {
   })
 })
 
+test('jwt + custom headers - encode with callback / sign', function(assert) {
+  var pem = read(__dirname + '/fixtures/test.pem').toString('ascii')
+  jwt.encode(pem, payloadWithHeaders, 'RS256', function(err, token) {
+    assert.deepEqual(err, null)
+    assert.ok(token)
+    theTokenSignWithHeaders = token
+    assert.deepEqual(token.split('.').length, 3)
+    assert.end()
+  })
+})
+
 test('jwt - encode with callback / bad algorithm', function(assert) {
   jwt.encode(secret, payload, 'wow', function(err) {
     assert.deepEqual(err.message, 'The algorithm is not supported!')
@@ -77,6 +99,15 @@ test('jwt - decode with callback / sign', function(assert) {
   jwt.decode(crt, theTokenSign, function(err, decodePayload) {
     assert.deepEqual(err, null)
     assert.deepEqual(decodePayload, payload)
+    assert.end()
+  })
+})
+
+test('jwt + custom headers - decode with callback / sign', function(assert) {
+  var crt = read(__dirname + '/fixtures/test.crt').toString('ascii')
+  jwt.decode(crt, theTokenSignWithHeaders, function(err, decodePayload) {
+    assert.deepEqual(err, null)
+    assert.deepEqual(decodePayload, payloadWithHeaders)
     assert.end()
   })
 })
