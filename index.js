@@ -1,5 +1,7 @@
 'use strict'
 
+var xtend = require('xtend')
+
 const crypto    = require('crypto')
 const b64url    = require('base64-url')
 const inherits  = require('util').inherits
@@ -43,7 +45,10 @@ function encode (key, payload, algorithm, cb) {
     return prcResult(validationError, null, cb)
   }
 
-  var parts = b64url.encode(JSON.stringify({typ: 'JWT', alg: algorithm})) +
+  var header = xtend({typ: 'JWT', alg: algorithm}, payload.header);
+  delete payload.header;
+
+  var parts = b64url.encode(JSON.stringify(header)) +
     '.' +
     b64url.encode(JSON.stringify(payload))
 
