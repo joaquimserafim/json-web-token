@@ -23,7 +23,7 @@ the version `2.*.*` should work only for NodeJS >= **4** for NodeJS **0.10** and
 ##### jwt#encode(key, payload, [algorithm], cb)
 
 * **key**, your secret
-* **payload**, the payload or Claim Names,
+* **payload**, the payload or Claim Names or an object with {payload, header}
 
 *ex:*
 ```js
@@ -49,7 +49,7 @@ the version `2.*.*` should work only for NodeJS >= **4** for NodeJS **0.10** and
 
 * **key**, your secret
 * **token**, the JWT token
-* **cb**, the callback(err[name, message], payloadDecoded)
+* **cb**, the callback(err[name, message], decodedPayload[, decodedHeader])
 
 
 #### Example
@@ -74,25 +74,51 @@ var secret = 'TOPSECRETTTTT';
 // encode
 jwt.encode(secret, payload, function (err, token) {
   if (err) {
-    return console.error(err.name, err.message);
+    console.error(err.name, err.message);
   } else {
     console.log(token);
 
     // decode
-    jwt.decode(secret, token, function (err_, decode) {
+    jwt.decode(secret, token, function (err_, decodedPayload, decodedHeader) {
       if (err) {
-        return console.error(err.name, err.message);
+        console.error(err.name, err.message);
       } else {
-        console.log(decode);
+        console.log(decodedPayload, decodedHeader);
       }
     });
   }
 });
 ```
 
+**using the optional [reserved headers](http://self-issued.info/docs/draft-jones-json-web-token-01.html#ReservedHeaderParameterName) (alg and typ can't be set using this method)**
+```js
+var settingAddHeaders = {
+  payload: {
+    "iss": "my_issurer",
+    "aud": "World",
+    "iat": 1400062400223,
+    "typ": "/online/transactionstatus/v2",
+    "request": {
+      "myTransactionId": "[myTransactionId]",
+      "merchantTransactionId": "[merchantTransactionId]",
+      "status": "SUCCESS"
+    }
+  },
+  header: {
+    kid: 'key ID'
+  }
+}
+
+jwt.encode(secret, settingAddHeaders, function (err, token) {
+
+})
+
+```
+
+
 ---
 
-#####this projet has been set up with a precommit that forces you to follow a code style, no jshint issues and 100% of code coverage before commit
+#### this projet has been set up with a precommit that forces you to follow a code style, no jshint issues and 100% of code coverage before commit
 
 to run test
 ```js

@@ -1,11 +1,11 @@
 'use strict'
 
-var xtend = require('xtend')
-
 const crypto    = require('crypto')
 const b64url    = require('base64-url')
 const inherits  = require('util').inherits
 const parse     = require('json-parse-safe')
+const extend    = require('xtend')
+const isObject  = require('is.object')
 
 //
 // supported algorithms
@@ -33,22 +33,29 @@ function getAlgorithms () {
   return Object.keys(algorithms)
 }
 
-function encode (key, payload, algorithm, cb) {
+function encode (key, data, algorithm, cb) {
   if (paramIsValid(algorithm, 'function')) {
     cb = algorithm
     algorithm = 'HS256'
   }
 
-  var validationError = encodeValidations(key, payload, algorithm)
+  var defaultHeader = {typ: 'JWT', alg: algorithm}
+
+  var payload = isObject(data) && data.payload ?
+    data.payload :
+    data
+
+  var header = isObject(data) && data.header ?
+    extend(data.header, defaultHeader) :
+    defaultHeader
+
+  const validationError = encodeValidations(key, payload, algorithm)
 
   if (validationError) {
     return prcResult(validationError, null, cb)
   }
 
-  var header = xtend({typ: 'JWT', alg: algorithm}, payload.header);
-  delete payload.header;
-
-  var parts = b64url.encode(JSON.stringify(header)) +
+  const parts = b64url.encode(JSON.stringify(header)) +
     '.' +
     b64url.encode(JSON.stringify(payload))
 
@@ -64,7 +71,7 @@ function decode (key, token, cb) {
     return prcResult('The key and token are mandatory!', null, cb)
   }
 
-  var parts = token.split('.')
+  const parts = token.split('.')
 
   // check all parts're present
   if (parts.length !== 3) {
@@ -76,25 +83,25 @@ function decode (key, token, cb) {
   }
 
   // base64 decode and parse JSON
-  var header = JSONParse(b64url.decode(parts[0]))
-  var payload = JSONParse(b64url.decode(parts[1]))
+  const header = JSONParse(b64url.decode(parts[0]))
+  const payload = JSONParse(b64url.decode(parts[1]))
 
   // get algorithm hash and type and check if is valid
-  var algorithm = algorithms[header.alg]
+  const algorithm = algorithms[header.alg]
 
   if (!algorithm) {
     return prcResult('The algorithm is not supported!', null, cb)
   }
 
   // verify the signature
-  var res = verify(
+  const res = verify(
     algorithm,
     key,
     parts.slice(0, 2).join('.'),
     parts[2]
   )
 
-  return prcResult(!res && 'Invalid key!' || null, payload, cb)
+  return prcResult(!res && 'Invalid key!' || null, payload, header, cb)
 }
 
 function encodeValidations (key, payload, algorithm) {
@@ -140,12 +147,20 @@ function verify (alg, key, input, signVar) {
       .verify(key, b64url.unescape(signVar), 'base64')
 }
 
-function prcResult (err, res, cb) {
+function prcResult (err, payload, header, cb) {
+  if (paramIsValid(header, 'function')) {
+    cb = header
+    header = undefined
+  }
+
   err = err && new JWTError(err)
 
   return cb ?
-    cb(err, res) :
-    {error: err, value: res}
+    cb(err, payload, header) :
+      (header ?
+        {error: err, value: payload, header: header} :
+        {error: err, value: payload}
+      )
 }
 
 function paramIsValid (param, type) {
@@ -157,8 +172,7 @@ function paramsAreFalsy (param1, param2) {
 }
 
 function JSONParse (str) {
-  var res = parse(str)
+  const res = parse(str)
 
   return res.error && '' || res.value
 }
-
