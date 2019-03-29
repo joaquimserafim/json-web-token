@@ -1,21 +1,21 @@
 'use strict'
 
-const crypto    = require('crypto')
-const b64url    = require('base64-url')
-const inherits  = require('util').inherits
-const parse     = require('json-parse-safe')
-const extend    = require('xtend')
-const isObject  = require('is.object')
+const crypto = require('crypto')
+const b64url = require('base64-url')
+const inherits = require('util').inherits
+const parse = require('json-parse-safe')
+const extend = require('xtend')
+const isObject = require('is.object')
 
 //
 // supported algorithms
 //
 
 const algorithms = {
-  HS256: {hash: 'sha256', type: 'hmac'},
-  HS384: {hash: 'sha384', type: 'hmac'},
-  HS512: {hash: 'sha512', type: 'hmac'},
-  RS256: {hash: 'RSA-SHA256', type: 'sign'}
+  HS256: { hash: 'sha256', type: 'hmac' },
+  HS384: { hash: 'sha384', type: 'hmac' },
+  HS512: { hash: 'sha512', type: 'hmac' },
+  RS256: { hash: 'RSA-SHA256', type: 'sign' }
 }
 
 //
@@ -24,30 +24,30 @@ const algorithms = {
 
 const jwt = module.exports
 
-jwt.JWTError      = JWTError
+jwt.JWTError = JWTError
 jwt.getAlgorithms = getAlgorithms
-jwt.encode        = encode
-jwt.decode        = decode
+jwt.encode = encode
+jwt.decode = decode
 
 function getAlgorithms () {
   return Object.keys(algorithms)
 }
 
 function encode (key, data, algorithm, cb) {
-  if (paramIsValid(algorithm, 'function')) {
+  if (isFunction(algorithm, 'function')) {
     cb = algorithm
     algorithm = 'HS256'
   }
 
-  var defaultHeader = {typ: 'JWT', alg: algorithm}
+  var defaultHeader = { typ: 'JWT', alg: algorithm }
 
-  var payload = isObject(data) && data.payload ?
-    data.payload :
-    data
+  var payload = isObject(data) && data.payload
+    ? data.payload
+    : data
 
-  var header = isObject(data) && data.header ?
-    extend(data.header, defaultHeader) :
-    defaultHeader
+  var header = isObject(data) && data.header
+    ? extend(data.header, defaultHeader)
+    : defaultHeader
 
   const validationError = encodeValidations(key, payload, algorithm)
 
@@ -101,15 +101,15 @@ function decode (key, token, cb) {
     parts[2]
   )
 
-  return prcResult(!res && 'Invalid key!' || null, payload, header, cb)
+  return prcResult((!res && 'Invalid key!') || null, payload, header, cb)
 }
 
 function encodeValidations (key, payload, algorithm) {
-  return paramsAreFalsy(key, payload) ?
-    'The key and payload are mandatory!' :
-      !Object.keys(payload).length ?
-        'The payload is an empty object!' :
-        !algorithms[algorithm] && 'The algorithm is not supported!'
+  return paramsAreFalsy(key, payload)
+    ? 'The key and payload are mandatory!'
+    : !Object.keys(payload).length
+      ? 'The payload is an empty object!'
+      : !algorithms[algorithm] && 'The algorithm is not supported!'
 }
 
 //
@@ -130,41 +130,41 @@ inherits(JWTError, Error)
 //
 
 function sign (alg, key, input) {
-  return 'hmac' === alg.type ?
-    b64url.escape(crypto.createHmac(alg.hash, key)
+  return alg.type === 'hmac'
+    ? b64url.escape(crypto.createHmac(alg.hash, key)
       .update(input)
-      .digest('base64')) :
-    b64url.escape(crypto.createSign(alg.hash)
+      .digest('base64'))
+    : b64url.escape(crypto.createSign(alg.hash)
       .update(input)
       .sign(key, 'base64'))
 }
 
 function verify (alg, key, input, signVar) {
-  return 'hmac' === alg.type ?
-    signVar === sign(alg, key, input) :
-    crypto.createVerify(alg.hash)
+  return alg.type === 'hmac'
+    ? signVar === sign(alg, key, input)
+    : crypto.createVerify(alg.hash)
       .update(input)
       .verify(key, b64url.unescape(signVar), 'base64')
 }
 
 function prcResult (err, payload, header, cb) {
-  if (paramIsValid(header, 'function')) {
+  if (isFunction(header, 'function')) {
     cb = header
     header = undefined
   }
 
   err = err && new JWTError(err)
 
-  return cb ?
-    cb(err, payload, header) :
-      (header ?
-        {error: err, value: payload, header: header} :
-        {error: err, value: payload}
-      )
+  return cb
+    ? cb(err, payload, header)
+    : (header
+      ? { error: err, value: payload, header: header }
+      : { error: err, value: payload }
+    )
 }
 
-function paramIsValid (param, type) {
-  return !param || typeof param === type
+function isFunction (param) {
+  return !param || typeof param === 'function'
 }
 
 function paramsAreFalsy (param1, param2) {
@@ -174,5 +174,5 @@ function paramsAreFalsy (param1, param2) {
 function JSONParse (str) {
   const res = parse(str)
 
-  return res.error && '' || res.value
+  return res.error ? '' : res.value
 }
