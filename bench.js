@@ -43,7 +43,7 @@ new Benchmark.Suite()
   .on('complete', () => {
     console.log('benchmark finish')
   })
-  .run({'async': true})
+  .run({ 'async': true })
 
 //
 //
@@ -52,4 +52,3 @@ new Benchmark.Suite()
 function uuid () {
   return (~~(Math.random() * 1e9)).toString(36)
 }
-

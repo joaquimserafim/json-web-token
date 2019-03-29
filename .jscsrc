@@ -1,8 +1,0 @@
-{
-  "verbose": true,
-  "preset": "google",
-  "requireSemicolons": null,
-  "disallowSpacesInFunctionDeclaration": null,
-  "disallowSpacesInAnonymousFunctionExpression": null,
-  "disallowSpacesInFunctionExpression": null
-}
