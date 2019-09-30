@@ -41,13 +41,12 @@ function encode (key, data, algorithm, cb) {
 
   var defaultHeader = { typ: 'JWT', alg: algorithm }
 
-  var payload = isObject(data) && data.payload
-    ? data.payload
-    : data
+  var payload = isObject(data) && data.payload ? data.payload : data
 
-  var header = isObject(data) && data.header
-    ? extend(data.header, defaultHeader)
-    : defaultHeader
+  var header =
+    isObject(data) && data.header
+      ? extend(data.header, defaultHeader)
+      : defaultHeader
 
   const validationError = encodeValidations(key, payload, algorithm)
 
@@ -55,7 +54,8 @@ function encode (key, data, algorithm, cb) {
     return prcResult(validationError, null, cb)
   }
 
-  const parts = b64url.encode(JSON.stringify(header)) +
+  const parts =
+    b64url.encode(JSON.stringify(header)) +
     '.' +
     b64url.encode(JSON.stringify(payload))
 
@@ -75,11 +75,7 @@ function decode (key, token, cb) {
 
   // check all parts're present
   if (parts.length !== 3) {
-    return prcResult(
-      'The JWT should consist of three parts!',
-      null,
-      cb
-    )
+    return prcResult('The JWT should consist of three parts!', null, cb)
   }
 
   // base64 decode and parse JSON
@@ -94,12 +90,7 @@ function decode (key, token, cb) {
   }
 
   // verify the signature
-  const res = verify(
-    algorithm,
-    key,
-    parts.slice(0, 2).join('.'),
-    parts[2]
-  )
+  const res = verify(algorithm, key, parts.slice(0, 2).join('.'), parts[2])
 
   return prcResult((!res && 'Invalid key!') || null, payload, header, cb)
 }
@@ -131,18 +122,25 @@ inherits(JWTError, Error)
 
 function sign (alg, key, input) {
   return alg.type === 'hmac'
-    ? b64url.escape(crypto.createHmac(alg.hash, key)
-      .update(input)
-      .digest('base64'))
-    : b64url.escape(crypto.createSign(alg.hash)
-      .update(input)
-      .sign(key, 'base64'))
+    ? b64url.escape(
+      crypto
+        .createHmac(alg.hash, key)
+        .update(input)
+        .digest('base64')
+    )
+    : b64url.escape(
+      crypto
+        .createSign(alg.hash)
+        .update(input)
+        .sign(key, 'base64')
+    )
 }
 
 function verify (alg, key, input, signVar) {
   return alg.type === 'hmac'
     ? signVar === sign(alg, key, input)
-    : crypto.createVerify(alg.hash)
+    : crypto
+      .createVerify(alg.hash)
       .update(input)
       .verify(key, b64url.unescape(signVar), 'base64')
 }
@@ -157,10 +155,9 @@ function prcResult (err, payload, header, cb) {
 
   return cb
     ? cb(err, payload, header)
-    : (header
+    : header
       ? { error: err, value: payload, header: header }
       : { error: err, value: payload }
-    )
 }
 
 function isFunction (param) {

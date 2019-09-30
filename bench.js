@@ -43,7 +43,7 @@ new Benchmark.Suite()
   .on('complete', () => {
     console.log('benchmark finish')
   })
-  .run({ 'async': true })
+  .run({ async: true })
 
 //
 //
