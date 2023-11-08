@@ -36,7 +36,7 @@
   },
   "homepage": "https://github.com/joaquimserafim/json-web-token",
   "dependencies": {
-    "base64-url": "^2.3.2",
+    "base64-url": "^2.3.3",
     "is.object": "^1.0.0",
     "json-parse-safe": "^2.0.0",
     "xtend": "^4.0.2"
