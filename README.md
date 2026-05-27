@@ -1,161 +1,143 @@
 # json-web-token
 
-JWT encode and decode for Node.js that can use callbacks or by returning an object `{error:, value:}`
+[![CI](https://github.com/joaquimserafim/json-web-token/actions/workflows/ci.yml/badge.svg)](https://github.com/joaquimserafim/json-web-token/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/json-web-token.svg)](https://www.npmjs.com/package/json-web-token)
 
+JSON Web Token (JWT) encode/decode for Node. Zero runtime dependencies,
+timing-safe signature verification, both callback and result-object APIs.
 
-**WIKI**
+## Install
 
-JSON Web Token (JWT) is a compact URL-safe means of representing claims to be transferred between two parties. The claims in a JWT are encoded as a JavaScript Object Notation (JSON) object that is used as the payload of a JSON Web Signature (JWS) structure or as the plaintext of a JSON Web Encryption (JWE) structure, enabling the claims to be digitally signed or MACed and/or encrypted.
-
-
-[info](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-08) & [more info](http://self-issued.info/docs/draft-jones-json-web-token-01.html)
-
-
-<a href="https://nodei.co/npm/json-web-token/"><img src="https://nodei.co/npm/json-web-token.png?downloads=true"></a>
-
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg?style=flat-square)](https://travis-ci.org/joaquimserafim/json-web-token)![Code Coverage 100%](https://img.shields.io/badge/code%20coverage-100%25-green.svg?style=flat-square)[![ISC License](https://img.shields.io/badge/license-ISC-blue.svg?style=flat-square)](https://github.com/joaquimserafim/json-web-token/blob/master/LICENSE)
-
-the version `2.*.*` should work only for NodeJS >= **4** for NodeJS **0.10** and **0.12** should install the version `1.6.3`
-
-### API
-
-
-##### jwt#encode(key, payload, [algorithm], cb)
-
-* **key**, your secret
-* **payload**, the payload or Claim Names or an object with {payload, header}
-
-*ex:*
-```js
-{
-   "iss": "my_issurer",
-  "aud": "World",
-  "iat": 1400062400223,
-  "typ": "/online/transactionstatus/v2",
-  "request": {
-    "myTransactionId": "[myTransactionId]",
-    "merchantTransactionId": "[merchantTransactionId]",
-    "status": "SUCCESS"
-  }
-}
+```sh
+npm install json-web-token
+# or
+pnpm add json-web-token
+# or
+yarn add json-web-token
 ```
 
-*attention that exists some reserved claim names (like "iss", "iat", etc..) check [in here](http://tools.ietf.org/html/draft-ietf-oauth-json-web-token-08#section-4) for more info about JWT Claims.*
-* **algorithm**, default to 'sha256', use *jwt#getAlgorithms()* to get the supported algorithms
-* **cb**, the callback(err[name, message], token)
-
-
-#####  jwt#decode(key, token, cb)
-
-* **key**, your secret
-* **token**, the JWT token
-* **cb**, the callback(err[name, message], decodedPayload[, decodedHeader])
-
-
-#### Example
+## Quick start
 
 ```js
-var jwt = require('json-web-token');
+import { encode, decode } from "json-web-token";        // ESM
+// const { encode, decode } = require("json-web-token"); // CJS
 
-var payload = {
-  "iss": "my_issurer",
-  "aud": "World",
-  "iat": 1400062400223,
-  "typ": "/online/transactionstatus/v2",
-  "request": {
-    "myTransactionId": "[myTransactionId]",
-    "merchantTransactionId": "[merchantTransactionId]",
-    "status": "SUCCESS"
-  }
-};
+const secret = "TOPSECRETTTTT";
+const payload = { iss: "me", aud: "you", iat: Date.now() };
 
-var secret = 'TOPSECRETTTTT';
-
-// encode
-jwt.encode(secret, payload, function (err, token) {
-  if (err) {
-    console.error(err.name, err.message);
-  } else {
-    console.log(token);
-
-    // decode
-    jwt.decode(secret, token, function (err_, decodedPayload, decodedHeader) {
-      if (err) {
-        console.error(err.name, err.message);
-      } else {
-        console.log(decodedPayload, decodedHeader);
-      }
-    });
-  }
+// Callback style
+encode(secret, payload, (err, token) => {
+  if (err) return console.error(err.name, err.message);
+  decode(secret, token, (err, decoded, header) => {
+    if (err) return console.error(err.name, err.message);
+    console.log(decoded, header);
+  });
 });
+
+// Result-object style (no callback)
+const { error, value: token } = encode(secret, payload);
+const { error: e2, value: decoded, header } = decode(secret, token);
 ```
 
-**using the optional [reserved headers](http://self-issued.info/docs/draft-jones-json-web-token-01.html#ReservedHeaderParameterName) (alg and typ can't be set using this method)**
+### Custom headers
+
 ```js
-var settingAddHeaders = {
-  payload: {
-    "iss": "my_issurer",
-    "aud": "World",
-    "iat": 1400062400223,
-    "typ": "/online/transactionstatus/v2",
-    "request": {
-      "myTransactionId": "[myTransactionId]",
-      "merchantTransactionId": "[merchantTransactionId]",
-      "status": "SUCCESS"
-    }
-  },
-  header: {
-    kid: 'key ID'
-  }
+const { value: token } = encode(secret, {
+  payload: { iss: "me", aud: "you" },
+  header: { kid: "my-key-id" },
+}, "HS512");
+```
+
+Header keys you provide are merged with the defaults — `typ` and `alg` are
+always set by the library and cannot be overridden through this surface.
+
+## API
+
+```ts
+function encode(key: string | Buffer, data: unknown): EncodeResult;
+function encode(key: string | Buffer, data: unknown, algorithm: string): EncodeResult;
+function encode(key: string | Buffer, data: unknown, cb: EncodeCallback): void;
+function encode(key: string | Buffer, data: unknown, algorithm: string, cb: EncodeCallback): void;
+
+function decode(key: string | Buffer, token: string): DecodeResult;
+function decode(key: string | Buffer, token: string, cb: DecodeCallback): void;
+function decode(key: string | Buffer, token: string, options: DecodeOptions): DecodeResult;
+function decode(key: string | Buffer, token: string, options: DecodeOptions, cb: DecodeCallback): void;
+
+interface DecodeOptions {
+  algorithms?: string[];   // optional allowlist; rejects header.alg outside the list
 }
 
-jwt.encode(secret, settingAddHeaders, function (err, token) {
-
-})
-
+function getAlgorithms(): string[];          // ["HS256","HS384","HS512","RS256"]
+class    JWTError extends Error { }
 ```
 
+`EncodeResult` is `{ error: JWTError | null; value: string | null }`.
+`DecodeResult` is `{ error: JWTError | null; value: unknown; header?: JWTHeader }`.
 
----
+## Security notes
 
-#### this projet has been set up with a precommit that forces you to follow a code style, no jshint issues and 100% of code coverage before commit
+- **CVE-2023-48238 (algorithm confusion) is fixed.** v4 refuses to verify
+  any token whose algorithm family does not match the key handed to
+  `decode`. PEM-encoded keys (anything starting with `-----BEGIN`) can
+  only be paired with the asymmetric algorithms (`RS*`); plain secrets
+  (string or Buffer without PEM markers) can only be paired with the
+  HMAC algorithms (`HS*`). This blocks the classic RS256→HS256 swap
+  where an attacker re-signs a token with HMAC using the server's RSA
+  public key as the HMAC secret.
+- **Optional algorithm allowlist.** Safety-conscious callers can pass
+  `{ algorithms: ["RS256"] }` (or any subset) to `decode` to reject
+  any token whose `header.alg` is outside that list, in addition to the
+  key-type guard above.
+- **Timing-safe HMAC verify** — v4 compares signatures with
+  `crypto.timingSafeEqual` on length-checked Buffers, removing the
+  timing side-channel that was present in v3's string `===` compare.
+- **`alg: 'none'` is rejected** in both `encode` and `decode`.
+- **Claim validation is out of scope.** `exp`, `nbf`, `iat`, `iss`,
+  `aud`, `sub` are not validated automatically. Check them in your own
+  code on the decoded payload.
 
-to run test
-```js
-npm test
-```
+## Supported algorithms
 
-to run jshint
-```js
-npm run lint
-```
+`HS256`, `HS384`, `HS512`, `RS256`.
 
-to run code style
-```js
-npm run style
-```
+## Migrating from v3
 
-to run code coverage
-```js
-npm run coverage
-```
+v4 keeps the same call shapes and field names — most consumers need no
+changes. Worth knowing:
 
-to open the code coverage report
-```js
-npm run coverage:open
-```
+| Topic | v3 | v4 |
+| --- | --- | --- |
+| Min Node | `>=8` | `>=18` |
+| Runtime deps | 4 (`base64-url`, `is.object`, `json-parse-safe`, `xtend`) | **none** |
+| HMAC verify | string `===` (timing-leaky) | `crypto.timingSafeEqual` |
+| Algorithm confusion | **vulnerable (CVE-2023-48238)** | **fixed** — key-type / alg-family guard on encode + decode |
+| Algorithm allowlist | none | optional `algorithms` in `decode` options |
+| Module formats | CJS only | ESM + CJS via `exports` map |
+| Types | hand-written `index.d.ts` (loose `any`) | TS source, generated `.d.mts` / `.d.cts` |
+| Base64url | `base64-url` package | Node native `Buffer` |
+| Build | hand-edited `index.js` | tsup from TS |
+| Test runner | mocha + nyc | vitest with v8 coverage |
+| Linter | `standard` | `biome` |
+| CI | Travis (Node 8/10/12) | GitHub Actions (Node 20/22/24) |
 
-to run benchmarks
-```js
-npm run bench
-```
+The `{ error, value, [header] }` return shape, the callback signatures,
+and `getAlgorithms()` / `JWTError` are unchanged.
 
-to run the source complexity tool
-```js
-npm run complexity
-```
+## Size
 
-to open the complexity report
-```js
-npm run complexity:open
-```
+Zero runtime dependencies. What ships in the npm tarball:
+
+| What                                  | Raw      | Gzipped  |
+| ------------------------------------- | -------- | -------- |
+| **ESM runtime** (`index.mjs`)         | 5 729 B  | 1 749 B  |
+| **CJS runtime** (`index.cjs`)         | 5 790 B  | 1 761 B  |
+| **Types** (`.d.mts` / `.d.cts`)       | 6 632 B  | 1 253 B  |
+| Sourcemaps (debug-only, not loaded)   | 34 244 B | 5 053 B  |
+
+Only one of the two runtime files is loaded by your bundler / Node, so
+the real cost in your app is ~1.8 kB gzipped.
+
+## License
+
+ISC © [@joaquimserafim](https://github.com/joaquimserafim)
