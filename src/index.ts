@@ -14,11 +14,10 @@
  *     plain `===` compare, so an attacker can't timing-leak which
  *     prefix bytes of the signature match.
  *   - `alg: 'none'` and unknown algorithms continue to be rejected.
- *   - Public API and call shapes are unchanged from v3:
- *       encode(key, data, [algorithm], [cb])
- *       decode(key, token, [options], [cb])
- *     With or without a callback. Without a callback, returns
- *     { error, value } (or { error, value, header } on decode).
+ *   - Synchronous result-object API only — callbacks dropped:
+ *       encode(key, data, [algorithm])  →  { error, value }
+ *       decode(key, token, [options])   →  { error, value, header? }
+ *     Wrap in a Promise yourself if you want async ergonomics.
  */
 
 import {
@@ -72,17 +71,6 @@ export interface DecodeOptions {
 	algorithms?: string[];
 }
 
-export type EncodeCallback = (
-	err: JWTError | null,
-	token?: string | null
-) => void;
-
-export type DecodeCallback = (
-	err: JWTError | null,
-	payload?: unknown,
-	header?: JWTHeader
-) => void;
-
 type Key = string | Buffer;
 
 interface PayloadWrapper {
@@ -120,57 +108,39 @@ function isWrapper(value: unknown): value is PayloadWrapper {
 	return isPlainObject(value) && "payload" in value && value.payload != null;
 }
 
+function fail(message: string): EncodeResult {
+	return { error: new JWTError(message), value: null };
+}
+
+function failDecode(message: string): DecodeResult {
+	return { error: new JWTError(message), value: null };
+}
+
 export function getAlgorithms(): AlgorithmName[] {
 	return Object.keys(algorithms) as AlgorithmName[];
 }
 
-export function encode(key: Key, data: unknown): EncodeResult;
 export function encode(
 	key: Key,
 	data: unknown,
-	algorithm: string
-): EncodeResult;
-export function encode(key: Key, data: unknown, cb: EncodeCallback): void;
-export function encode(
-	key: Key,
-	data: unknown,
-	algorithm: string,
-	cb: EncodeCallback
-): void;
-export function encode(
-	key: Key,
-	data: unknown,
-	algorithm?: string | EncodeCallback,
-	cb?: EncodeCallback
-): EncodeResult | undefined {
-	let alg: string;
-	if (typeof algorithm === "function" || algorithm == null) {
-		cb = algorithm as EncodeCallback | undefined;
-		alg = "HS256";
-	} else {
-		alg = algorithm;
-	}
-
-	const defaultHeader = { typ: "JWT", alg };
+	algorithm: string = "HS256"
+): EncodeResult {
+	const defaultHeader = { typ: "JWT", alg: algorithm };
 	const payload: unknown = isWrapper(data) ? data.payload : data;
 	const header: Record<string, unknown> =
 		isWrapper(data) && isPlainObject(data.header)
 			? { ...data.header, ...defaultHeader }
 			: defaultHeader;
 
-	const validationError = encodeValidations(key, payload, alg);
-	if (validationError) {
-		return finishEncode(validationError, null, cb);
-	}
+	const validationError = encodeValidations(key, payload, algorithm);
+	if (validationError) return fail(validationError);
 
-	const algSpec = algorithms[alg as AlgorithmName];
+	const algSpec = algorithms[algorithm as AlgorithmName];
 	if (!algorithmMatchesKey(algSpec, inferKeyKind(key))) {
-		return finishEncode(
+		return fail(
 			algSpec.type === "hmac"
 				? "Algorithm/key mismatch: HMAC algorithm requires a plain secret, not an asymmetric key."
-				: "Algorithm/key mismatch: asymmetric algorithm requires a PEM-encoded key, not a plain secret.",
-			null,
-			cb
+				: "Algorithm/key mismatch: asymmetric algorithm requires a PEM-encoded key, not a plain secret."
 		);
 	}
 
@@ -178,64 +148,26 @@ export function encode(
 	const payloadPart = encodeBase64Url(JSON.stringify(payload));
 	const signingInput = `${headerPart}.${payloadPart}`;
 	const signature = sign(algSpec, key, signingInput);
-	return finishEncode(null, `${signingInput}.${signature}`, cb);
+	return { error: null, value: `${signingInput}.${signature}` };
 }
 
-export function decode(key: Key, token: string): DecodeResult;
-export function decode(key: Key, token: string, cb: DecodeCallback): void;
 export function decode(
 	key: Key,
 	token: string,
-	options: DecodeOptions
-): DecodeResult;
-export function decode(
-	key: Key,
-	token: string,
-	options: DecodeOptions,
-	cb: DecodeCallback
-): void;
-export function decode(
-	key: Key,
-	token: string,
-	optionsOrCb?: DecodeOptions | DecodeCallback,
-	cb?: DecodeCallback
-): DecodeResult | undefined {
-	let options: DecodeOptions = {};
-	if (typeof optionsOrCb === "function") {
-		cb = optionsOrCb;
-	} else if (optionsOrCb) {
-		options = optionsOrCb;
-	}
-
-	if (!key || !token) {
-		return finishDecode(
-			"The key and token are mandatory!",
-			null,
-			undefined,
-			cb
-		);
-	}
+	options: DecodeOptions = {}
+): DecodeResult {
+	if (!key || !token) return failDecode("The key and token are mandatory!");
 
 	const parts = token.split(".");
 	if (parts.length !== 3) {
-		return finishDecode(
-			"The JWT should consist of three parts!",
-			null,
-			undefined,
-			cb
-		);
+		return failDecode("The JWT should consist of three parts!");
 	}
 
 	const header = parseJSONOrNull(decodeBase64Url(parts[0] as string));
 	const payload = parseJSONOrNull(decodeBase64Url(parts[1] as string));
 
 	if (!isPlainObject(header)) {
-		return finishDecode(
-			"The algorithm is not supported!",
-			null,
-			undefined,
-			cb
-		);
+		return failDecode("The algorithm is not supported!");
 	}
 
 	const algName = header.alg;
@@ -243,23 +175,10 @@ export function decode(
 		typeof algName === "string"
 			? algorithms[algName as AlgorithmName]
 			: undefined;
-	if (!algorithm) {
-		return finishDecode(
-			"The algorithm is not supported!",
-			null,
-			undefined,
-			cb
-		);
-	}
+	if (!algorithm) return failDecode("The algorithm is not supported!");
 
-	// Optional opt-in allowlist for safety-conscious callers.
 	if (options.algorithms && !options.algorithms.includes(algName as string)) {
-		return finishDecode(
-			"The algorithm is not in the allowlist.",
-			null,
-			undefined,
-			cb
-		);
+		return failDecode("The algorithm is not in the allowlist.");
 	}
 
 	// CVE-2023-48238 fix: refuse to verify when the algorithm family
@@ -267,13 +186,10 @@ export function decode(
 	// confusion attack where an attacker re-signs a token with HMAC
 	// using the server's RSA public key as the secret.
 	if (!algorithmMatchesKey(algorithm, inferKeyKind(key))) {
-		return finishDecode(
+		return failDecode(
 			algorithm.type === "hmac"
 				? "Algorithm/key mismatch: refusing to verify an HMAC signature with an asymmetric key."
-				: "Algorithm/key mismatch: refusing to verify an asymmetric signature with a plain secret.",
-			null,
-			undefined,
-			cb
+				: "Algorithm/key mismatch: refusing to verify an asymmetric signature with a plain secret."
 		);
 	}
 
@@ -283,12 +199,11 @@ export function decode(
 		`${parts[0]}.${parts[1]}`,
 		parts[2] as string
 	);
-	return finishDecode(
-		ok ? null : "Invalid key!",
-		payload,
-		header as JWTHeader,
-		cb
-	);
+	return {
+		error: ok ? null : new JWTError("Invalid key!"),
+		value: payload,
+		header: header as JWTHeader,
+	};
 }
 
 function encodeValidations(
@@ -345,31 +260,4 @@ function parseJSONOrNull(input: string): unknown {
 	} catch {
 		return null;
 	}
-}
-
-function finishEncode(
-	err: string | null,
-	value: string | null,
-	cb: EncodeCallback | undefined
-): EncodeResult | undefined {
-	const error = err ? new JWTError(err) : null;
-	if (cb) {
-		cb(error, value);
-		return;
-	}
-	return { error, value };
-}
-
-function finishDecode(
-	err: string | null,
-	value: unknown,
-	header: JWTHeader | undefined,
-	cb: DecodeCallback | undefined
-): DecodeResult | undefined {
-	const error = err ? new JWTError(err) : null;
-	if (cb) {
-		cb(error, value, header);
-		return;
-	}
-	return header !== undefined ? { error, value, header } : { error, value };
 }
