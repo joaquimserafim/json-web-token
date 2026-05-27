@@ -1,6 +1,6 @@
 {
 	"name": "json-web-token",
-	"version": "4.0.0",
+	"version": "4.0.1",
 	"description": "JSON Web Token (JWT) encode/decode for Node — zero runtime dependencies, timing-safe verification.",
 	"type": "module",
 	"main": "./dist/index.cjs",
