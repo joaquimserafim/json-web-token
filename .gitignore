@@ -1,9 +1,12 @@
+progress.md
 node_modules
+dist
+coverage
 *.log
 *.sublime-project
 .npmignore
 .DS_Store
-coverage
 reports
 *.html
 .nyc_output
+*.tgz
